@@ -1,0 +1,104 @@
+// for project:  https://github.com/alim7007/budget-app-deploy/
+// 🔗 Checkout → gets your code.
+
+// 🐳 Build → only runs if FORCE_BUILD is true.
+
+// 🐘 Database Setup → starts Postgres only.
+
+// 🗄️ DB Migrate → runs db:create and db:migrate inside your web container.
+
+// 🔍 Lint: RuboCop → checks Ruby style.
+
+// 🎨 Lint: Stylelint → uses node:18 so you don’t fight Node versions.
+
+// 🧪 Test: RSpec → runs your tests.
+
+pipeline {
+  agent any
+
+  environment {
+    POSTGRES_USER = 'blog-app'
+    POSTGRES_PASSWORD = 'securepass'
+    POSTGRES_DB = 'budgetdb'
+  }
+
+  parameters {
+    booleanParam(name: 'FORCE_BUILD', defaultValue: false, description: 'Force rebuild web image?')
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        echo "🔗 Checking out repo..."
+        git branch: 'main',
+            url: 'https://github.com/alim7007/budget-app-deploy/'
+      }
+    }
+
+    stage('Build') {
+      when {
+        expression { params.FORCE_BUILD == true }
+      }
+      steps {
+        echo "🐳 Building fresh web image..."
+        sh "docker-compose -f docker-compose.yaml build"
+      }
+    }
+
+    stage('Database Setup') {
+      steps {
+        script {
+          echo "🐘 Starting database container..."
+          sh "docker-compose -f docker-compose.yaml up -d db"
+          sh "sleep 5"
+        }
+      }
+    }
+
+    stage('DB Migrate') {
+      steps {
+        script {
+          echo "🗄️ Running Rails DB tasks..."
+          sh "docker-compose -f docker-compose.yaml run --rm web bundle exec rails db:create db:migrate"
+        }
+      }
+    }
+
+    stage('Lint: RuboCop') {
+      steps {
+        script {
+          echo "🔍 Running RuboCop..."
+          sh "docker-compose -f docker-compose.yaml run --rm web bundle exec rubocop"
+        }
+      }
+    }
+
+    stage('Lint: Stylelint') {
+      steps {
+        script {
+          echo "🎨 Running Stylelint in Node 18..."
+          sh "docker run --rm -v \$PWD:/app -w /app node:18 npx stylelint \"**/*.{css,scss}\""
+        }
+      }
+    }
+
+    stage('Test: RSpec') {
+      steps {
+        script {
+          echo "🧪 Running RSpec..."
+          sh "docker-compose -f docker-compose.yaml run --rm web bundle exec rspec"
+        }
+      }
+    }
+
+  }
+
+  post {
+    always {
+      echo "🧹 Cleaning up containers and workspace..."
+      sh "docker-compose -f docker-compose.yaml down -v || true"
+      cleanWs()
+    }
+  }
+}

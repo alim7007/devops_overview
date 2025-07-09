@@ -1,0 +1,41 @@
+✅ -i → Keep input open → your keyboard stays connected.
+✅ -t → Create a TTY → makes a “screen” inside the container for nice output.
+✅ -T → No TTY → skip the “screen” → good for CI pipelines with no real terminal.
+
+👉 Check:
+
+If not running in a real terminal "CI pipeline" → set TTY="-T" → tells docker compose:
+“Don’t pretend there’s a terminal — there isn’t one!”
+
+
+
+--no-deps is safe here because _dc_run only runs tasks like yarn install and bundle install — they don’t need other containers, so skipping dependencies makes them faster.
+
+
+📌 🔹 String tests
+Expression	Meaning
+[ "$a" = "$b" ]	Are they equal?
+[ "$a" != "$b" ]	Are they not equal?
+[ -n "$a" ]	Non-empty
+[ -z "$a" ]	Empty
+
+📌 🔹 Number tests
+Expression	Meaning
+[ "$a" -eq "$b" ]	Equal
+[ "$a" -ne "$b" ]	Not equal
+[ "$a" -lt "$b" ]	Less than
+[ "$a" -le "$b" ]	Less than or equal
+[ "$a" -gt "$b" ]	Greater than
+[ "$a" -ge "$b" ]	Greater than or equal
+
+Numbers must be integers.
+
+📌 🔹 File tests
+Expression	Meaning
+[ -f "file" ]	File exists and is a regular file
+[ -d "dir" ]	Directory exists
+[ -e "file" ]	File or dir exists
+[ -s "file" ]	File exists and is not empty
+[ -r "file" ]	Is readable
+[ -w "file" ]	Is writable
+[ -x "file" ]	Is executable

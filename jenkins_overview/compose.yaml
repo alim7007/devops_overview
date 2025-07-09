@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  docker:   # ✅ Renamed from jenkins-docker
+    image: docker:dind
+    privileged: true
+    environment:
+      DOCKER_TLS_CERTDIR: "/certs"
+    volumes:
+      - devops-overview_jenkins-docker-certs:/certs
+      - devops-overview_jenkins-data:/var/jenkins_home
+    networks:
+      - jenkins
+    ports:
+      - "2376:2376"
+
+  jenkins-blueocean:
+    image: my-jenkins-blueocean   # 👈 Your custom Jenkins image with docker + compose installed
+    environment:
+      DOCKER_HOST: tcp://docker:2376   # ✅ Uses renamed service name to match cert CN
+      DOCKER_TLS_VERIFY: 1             # ✅ TLS verify stays ON (secure)
+      DOCKER_CERT_PATH: /certs/client
+    volumes:
+      - devops-overview_jenkins-data:/var/jenkins_home
+      - devops-overview_jenkins-docker-certs:/certs:ro
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    networks:
+      - jenkins
+
+volumes:
+  devops-overview_jenkins-data:
+    external: true
+  devops-overview_jenkins-docker-certs:
+    external: true
+
+networks:
+  jenkins:
