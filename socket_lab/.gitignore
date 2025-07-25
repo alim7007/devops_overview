@@ -1,0 +1,6 @@
+cert/
+*.crt
+*.key
+*.sock
+*.log
+*.out
